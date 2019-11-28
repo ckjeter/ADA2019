@@ -17,6 +17,7 @@
 */
 #include <stdio.h>
 #include <vector>
+#include <list>
 #include <algorithm>
 #include <iostream>
 using namespace std;
@@ -28,22 +29,41 @@ int main()
     cin>>N;
     int outlist[N+1];
     int _indegree[N+1];
+    int newnode[N+1][2];
     for (int i = 0; i < N+1; i++)
     {
         _indegree[i] = 0;
+        newnode[i][0] = 1; //份量
+        newnode[i][1] = 0; //終點
     }
     for (int i = 1; i <= N; i++)
     {
         cin>>outlist[i];
         _indegree[outlist[i]]++;
     }
+    for (int i = 1; i <= N; i++)
+    {
+        if (_indegree[i] != 1){
+            int idol = outlist[i];
+            while (_indegree[idol] <= 1 && idol != i){
+                //cout<<idol<<" "<<outlist[idol]<<endl;
+                newnode[i][0]++;
+                idol = outlist[idol];
+            }
+            newnode[i][1] = idol;
+        }
+    }
     int Qcount;
     cin>>Qcount;
     int answer[Qcount];
+    int indegree_new[N+1];
+    for (int i = 0; i <= N; i++) indegree_new[i] = 0;
+    list<int> deadidol;
+
     for (int i = 0; i < Qcount; i++)
     {
-        int indegree[N+1];
-        copy(_indegree, _indegree+N+1, indegree);
+        //int indegree[N+1];
+        //copy(_indegree, _indegree+N+1, indegree);
         
         int loser; //原本就不是偶像還被刪掉的人
         cin>>loser;
@@ -53,17 +73,27 @@ int main()
         {
             int victim;
             cin>>victim;
-            int idol = outlist[victim];
-            while (indegree[idol] > 0)
+            ans += newnode[victim][0];
+            int idol = newnode[victim][1];
+            while (indegree_new[idol] < _indegree[idol])
             {
-                indegree[idol]--;
-                if (indegree[idol] >= 1) break;
-                if (indegree[idol] == 0) empty++;
-                idol = outlist[idol];
+                indegree_new[idol]++;
+                deadidol.push_back(idol);
+                if (indegree_new[idol] < _indegree[idol]) break;
+                if (indegree_new[idol] == _indegree[idol]) empty += newnode[idol][0];
+                idol = newnode[idol][1];
             }
         }
-        ans = empty + loser;
+        ans += empty;
         answer[i] = ans;
+        int n = deadidol.size();
+        for (int j = 0; j < n; j++)
+        {
+            indegree_new[deadidol.front()] = 0;
+            deadidol.pop_front();
+        }
+        
+        
     }
     
     for (int i = 0; i < Qcount; i++)
