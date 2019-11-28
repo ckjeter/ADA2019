@@ -14,11 +14,6 @@
 1 5
 1 8
 1 5
-
-4
-4 2 4 1
-1
-1 3
 */
 #include <stdio.h>
 #include <vector>
