@@ -28,7 +28,7 @@ public:
 		for (int i = 0; i < num_vertex; i++) {  // 初始化
 			color[i] = 0;                       // 0:白色;
 			predecessor[i] = -1;                // -1表示沒有predecessor
-			distance[i] = num_vertex+1;         // num_vertex個vertex, 
+			distance[i] = num_vertex+1;         // num_vertex個vertex,
 		}                                       // 最長距離 distance = num_vertex -1條edge
 
 		queue<int> q;
@@ -65,14 +65,15 @@ public:
 int main(){
     cin.tie(0);
     ios_base::sync_with_stdio(false);
+	cout<<"ansdkanskjnajknd"<<endl;
 	/*
-    int testcase;   
+    int testcase;
     cin>>testcase;
     int answer[testcase];
     for (int z = 0; z < testcase; z++){
 		int N,M;
 
-        
+
     }
     for (int i = 0; i < testcase; i++){
         if (answer[i] < 0)  cout<<"LoveLive!"<<"\n";
