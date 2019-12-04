@@ -1,63 +1,139 @@
+/*
+2
+3 3
+10 10 10
+1 5 2 3
+2 7 1 6
+2 3 3 5
+1 1
+10
+1 6 1 3
+*/
 #include <iostream>
 #include <vector>
 #include <list>
 #include <queue>
+#include <unordered_map>
+#include <algorithm>
+#include <stack>
 using namespace std;
 
-class Graph{
+struct node
+{
+    int to,dist;
+    node(int t,int d):to(t),dist(d){}
+};
+class Graph
+{
 private:
 	int num_vertex;
-	vector<list<int> > AdjList;
-	vector<int> color;			// 0:白色, 1:灰色, 2:黑色
-	vector<int> predecessor;	// -1:沒有predecessor, 表示為起點vertex
-	vector<int> distance;		// 0:起點, 無限大:從起點走不到的vertex
-
+	vector<vector<node> > AdjList;
+	stack<int> toposort;
+	vector<int> dp;
 public:
 	Graph():num_vertex(0){};           // default constructor
 	Graph(int N):num_vertex(N){        // constructor with input: number of vertex
-		// initialize Adjacency List
 		AdjList.resize(num_vertex);
-		color.resize(num_vertex);
-		predecessor.resize(num_vertex);
-		distance.resize(num_vertex);
+		dp.resize(num_vertex);
 	};
-	void AddEdgeList(int from, int to){
-		AdjList[from].push_back(to);
+	void AddEdge(int from, int to, int dist){
+		AdjList[from].push_back(node(to, dist));
+	} 
+	bool isCyclicUtil(int v, bool visited[], bool *recStack) 
+	{ 
+		if(visited[v] == false) 
+		{ 
+			// Mark the current node as visited and part of recursion stack 
+			visited[v] = true; 
+			recStack[v] = true; 
+	
+			// Recur for all the vertices adjacent to this vertex 
+			vector<node>::iterator i; 
+			for(i = AdjList[v].begin(); i != AdjList[v].end(); ++i) 
+			{ 
+				if ( !visited[i->to] && isCyclicUtil(i->to, visited, recStack) ) 
+					return true; 
+				else if (recStack[i->to]) 
+					return true; 
+			} 
+	
+		} 
+		recStack[v] = false;  // remove the vertex from recursion stack 
+		return false; 
+	} 
+	bool isCyclic() 
+	{ 
+		// Mark all the vertices as not visited and not part of recursion 
+		// stack 
+		bool *visited = new bool[num_vertex]; 
+		bool *recStack = new bool[num_vertex]; 
+		for(int i = 0; i < num_vertex; i++) 
+		{ 
+			visited[i] = false; 
+			recStack[i] = false; 
+		} 
+	
+		// Call the recursive helper function to detect cycle in different 
+		// DFS trees 
+		for(int i = 0; i < num_vertex; i++) 
+			if (isCyclicUtil(i, visited, recStack)) 
+				return true; 
+	
+		return false; 
 	}
-	void BFS(int Start){
-		for (int i = 0; i < num_vertex; i++) {  // 初始化
-			color[i] = 0;                       // 0:白色;
-			predecessor[i] = -1;                // -1表示沒有predecessor
-			distance[i] = num_vertex+1;         // num_vertex個vertex,
-		}                                       // 最長距離 distance = num_vertex -1條edge
 
-		queue<int> q;
-		int i = Start;
-
-		for (int j = 0; j < num_vertex; j++) {  // j從0數到num_vertex-1, 因此j會走過graph中所有vertex
-			if (color[i] == 0) {                // 第一次i會是起點vertex, 如圖二(c)
-				color[i] = 1;                   // 1:灰色
-				distance[i] = 0;                // 每一個connected component的起點之距離設成0
-				predecessor[i] = -1;            // 每一個connected component的起點沒有predecessor
-				q.push(i);
-				while (!q.empty()) {
-					int u = q.front();                  // u 為新的搜尋起點
-					for (list<int>::iterator itr = AdjList[u].begin();        // for loop 太長
-						itr != AdjList[u].end(); itr++) {                         // 分成兩段
-						if (color[*itr] == 0) {                // 若被「找到」的vertex是白色
-							color[*itr] = 1;                   // 塗成灰色, 表示已經被「找到」
-							distance[*itr] = distance[u] + 1;  // 距離是predecessor之距離加一
-							predecessor[*itr] = u;             // 更新被「找到」的vertex的predecessor
-							q.push(*itr);                      // 把vertex推進queue
-						}
-					}
-					q.pop();        // 把u移出queue
-					color[u] = 2;   // 並且把u塗成黑色
-				}
+	void topologicalSortUtil(int v, bool visited[]) 
+	{ 
+		// Mark the current node as visited. 
+		visited[v] = true; 
+	
+		// Recur for all the vertices adjacent to this vertex 
+		vector<node>::iterator i; 
+		for (i = AdjList[v].begin(); i != AdjList[v].end(); ++i) 
+			if (!visited[i->to]) 
+				topologicalSortUtil(i->to, visited); 
+		// Push current vertex to stack which stores result 
+		toposort.push(v); 
+	} 
+	
+	// The function to do Topological Sort. It uses recursive 
+	// topologicalSortUtil() 
+	void topologicalSort() 
+	{ 
+		// Mark all the vertices as not visited 
+		bool* visited = new bool[num_vertex]; 
+		for (int i = 1; i < num_vertex; i++) 
+			visited[i] = false; 
+	
+		for (int i = 1; i < num_vertex; i++) 
+			if (visited[i] == false) 
+				topologicalSortUtil(i, visited);
+	} 
+	int finddiameter()
+	{	
+		while (toposort.empty() == false) {  
+			int now = toposort.top();
+			vector<node>::iterator it;
+			for (it = AdjList[now].begin(); it != AdjList[now].end(); it++){
+				dp[it->to] = max(dp[it->to], dp[now] + it->dist);
 			}
-			// 若一次回圈沒有把所有vertex走過, 表示graph有多個connected component
-			// 就把i另成j, 繼續檢查graph中的其他vertex是否仍是白色, 若是, 重複while loop
-			//i = j;
+			toposort.pop();
+		}
+		int answer = 0;
+		for (int i = 1; i < dp.size(); i++){
+			answer = max(answer, dp[i]);
+		}
+		return answer;
+	}
+
+	void show(){
+		for (int i = 1; i < AdjList.size(); i++){
+			cout<<i<<": ";
+			for (int j = 0; j < AdjList[i].size(); j++){
+				node& n = AdjList[i][j];
+				cout<<"( "<<n.to<<", "<<n.dist<<" )  ";
+			}
+			cout<<endl;
 		}
 	}
 };
@@ -65,20 +141,95 @@ public:
 int main(){
     cin.tie(0);
     ios_base::sync_with_stdio(false);
-	cout<<"ansdkanskjnajknd"<<endl;
-	/*
-    int testcase;
-    cin>>testcase;
-    int answer[testcase];
-    for (int z = 0; z < testcase; z++){
+	int problemcount;
+	cin>>problemcount;
+	vector<int> answer(problemcount);
+	for (int p = 0; p < problemcount; p++){
 		int N,M;
+		cin>>N>>M;
+		
+		vector<unordered_map<int, int> > nodemap(N+1); //<local index, global index>
+		unordered_map<int, int>::iterator it;
+		int jumppoint[M][4];
+		int nodecount = 0;
+	
+		//維護每首歌的頭尾點
+		int longestsong = 0;
+		for (int i = 1; i <= N; i++){
+			int length;
+			cin>>length;
+			longestsong = max(longestsong, length);
+			nodemap[i].insert(make_pair(1, ++nodecount));
+			nodemap[i].insert(make_pair(length, ++nodecount));
+		}
+		if (M == 0){
+			answer[p] = longestsong;
+			continue;
+		}
+		
+		//維護每首歌的中繼點
+		for (int i = 0; i < M; i++){
+			int from_song, from_time, to_song, to_time;
+			cin>>from_song>>from_time>>to_song>>to_time;
+			
+			if ((from_song == to_song) && (from_time >= to_time)){	//同一首歌自己有cycle
+				answer[p] = -1;
+				break;
+			}
+			
+			if ((from_song == to_song) && (from_time < to_time)){	//同一首歌自己jump->忽略
+				continue;
+			}
+			if (nodemap[from_song].find(from_time) == nodemap[from_song].end()) {
+				nodemap[from_song].insert(make_pair(from_time, ++nodecount));
+			}
+			if (nodemap[to_song].find(to_time) == nodemap[to_song].end()) {
+				nodemap[to_song].insert(make_pair(to_time, ++nodecount));
+			}
+			jumppoint[i][0] = from_song;
+			jumppoint[i][1] = from_time;
+			jumppoint[i][2] = to_song;
+			jumppoint[i][3] = to_time;
+		}
+		if (answer[p] == -1) continue;
+		Graph g(nodecount+1);
+		
+		//維護除了jump以外的邊
+		for (int i = 1; i <= N; i++){
+			vector<int> keys(nodemap[i].size());
+			it = nodemap[i].begin();
+			for (int j = 0; j < keys.size(); j++){
+				keys[j] = it->first;
+				it++;
+			}
+			sort(keys.begin(), keys.end());
+			for (int j = 0; j < keys.size()-1; j++){
+				g.AddEdge(nodemap[i][keys[j]], nodemap[i][keys[j+1]], keys[j+1] - keys[j]);
+			}
+		}
 
+		//維護jump的邊
+		for (int i = 0; i < M; i++){
+			int from_index, to_index;
+			from_index = nodemap[jumppoint[i][0]][jumppoint[i][1]];
+			to_index = nodemap[jumppoint[i][2]][jumppoint[i][3]];
+			g.AddEdge(from_index, to_index, 1);
+		}
 
-    }
-    for (int i = 0; i < testcase; i++){
-        if (answer[i] < 0)  cout<<"LoveLive!"<<"\n";
-        else cout<<answer[i]<<"\n";
-    }
-	*/
+		//計算
+		if (g.isCyclic()){
+			answer[p] = -1;
+			continue;
+		}
+		g.topologicalSort();
+		answer[p] = g.finddiameter() + 1;
+	}
+	
+	for (int i = 0; i < problemcount; i++)
+	{
+		if (answer[i] == -1) cout<<"LoveLive!"<<"\n";
+		else cout<<answer[i]<<"\n";
+	}
+	
     return 0;
 }
