@@ -141,18 +141,19 @@ public:
 int main(){
     cin.tie(0);
     ios_base::sync_with_stdio(false);
-	int problemcount;
-	cin>>problemcount;
-	vector<int> answer(problemcount);
-	for (int p = 0; p < problemcount; p++){
+	int testcase;
+	cin>>testcase;
+	int answer[testcase];
+	for (int p = 0; p < testcase; p++){
 		int N,M;
 		cin>>N>>M;
 		
-		vector<unordered_map<int, int> > nodemap(N+1); //<local index, global index>
+		vector<unordered_map<int, int> > nodemap; //<local index, global index>
+		nodemap.resize(N+1);
 		unordered_map<int, int>::iterator it;
 		int jumppoint[M][4];
 		int nodecount = 0;
-	
+
 		//維護每首歌的頭尾點
 		int longestsong = 0;
 		for (int i = 1; i <= N; i++){
@@ -166,7 +167,7 @@ int main(){
 			answer[p] = longestsong;
 			continue;
 		}
-		
+
 		//維護每首歌的中繼點
 		for (int i = 0; i < M; i++){
 			int from_song, from_time, to_song, to_time;
@@ -176,16 +177,13 @@ int main(){
 				answer[p] = -1;
 				break;
 			}
-			
-			if ((from_song == to_song) && (from_time < to_time)){	//同一首歌自己jump->忽略
-				continue;
-			}
 			if (nodemap[from_song].find(from_time) == nodemap[from_song].end()) {
 				nodemap[from_song].insert(make_pair(from_time, ++nodecount));
 			}
 			if (nodemap[to_song].find(to_time) == nodemap[to_song].end()) {
 				nodemap[to_song].insert(make_pair(to_time, ++nodecount));
 			}
+			
 			jumppoint[i][0] = from_song;
 			jumppoint[i][1] = from_time;
 			jumppoint[i][2] = to_song;
@@ -215,17 +213,20 @@ int main(){
 			to_index = nodemap[jumppoint[i][2]][jumppoint[i][3]];
 			g.AddEdge(from_index, to_index, 1);
 		}
+		
 
 		//計算
+		
 		if (g.isCyclic()){
 			answer[p] = -1;
 			continue;
 		}
 		g.topologicalSort();
 		answer[p] = g.finddiameter() + 1;
+		
 	}
 	
-	for (int i = 0; i < problemcount; i++)
+	for (int i = 0; i < testcase; i++)
 	{
 		if (answer[i] == -1) cout<<"LoveLive!"<<"\n";
 		else cout<<answer[i]<<"\n";
