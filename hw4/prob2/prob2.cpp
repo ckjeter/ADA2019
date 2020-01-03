@@ -24,7 +24,7 @@ public:
 		AdjList.resize(num_vertex);
         table.resize(num_vertex);
         srand(12345);
-        K = 300;
+        K = 500;
         for (int i = 0; i < num_vertex; i++){
             table[i].resize(K);
         }
@@ -51,18 +51,19 @@ public:
 			if (visited[i] == false) 
 				topologicalSortUtil(i, visited);
 	}
-    void randgen(int k){
+    void randgen(){
         for (int i = 0; i < num_vertex; i++){
-            table[i][k] = rand();
+            for (int k = 0; k < K; k++){
+                table[i][k] = rand();
+            }
         }
         
     }
     void MiniHash(){
-        for (int k = 0; k < K; k++){
-            randgen(k);
-            for (int i = 0; i < toposort.size(); i++){
-                for (int j = 0; j < AdjList[toposort[i]].size(); j++){
-                    
+        randgen();
+        for (int i = 0; i < toposort.size(); i++){
+            for (int j = 0; j < AdjList[toposort[i]].size(); j++){
+                for (int k = 0; k < K; k++){
                     table[toposort[i]][k] = min(table[toposort[i]][k], table[AdjList[toposort[i]][j].to][k]);
                 }
             }
